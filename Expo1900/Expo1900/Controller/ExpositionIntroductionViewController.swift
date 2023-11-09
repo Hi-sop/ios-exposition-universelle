@@ -16,6 +16,7 @@ final class ExpositionIntroductionViewController: UIViewController {
     @IBOutlet private var buttonImages: [UIImageView]!
     @IBOutlet private weak var scrollView: UIScrollView!
     private var exposition: Exposition?
+    private let delegate = UIApplication.shared.delegate as? AppDelegate
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -27,8 +28,13 @@ final class ExpositionIntroductionViewController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
+        delegate?.changeRotationState()
         scrollView.scrollRectToVisible(titleLabel.frame, animated: true)
         navigationController?.isNavigationBarHidden = true
+    }
+    
+    override func viewDidDisappear(_ animated: Bool) {
+        delegate?.changeRotationState()
     }
     
     @IBAction private func buttonTapped(_ sender: UIButton) {

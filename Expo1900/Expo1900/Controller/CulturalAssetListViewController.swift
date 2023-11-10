@@ -27,9 +27,11 @@ final class CulturalAssetListViewController: UITableViewController {
         let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
         var content = cell.defaultContentConfiguration()
         
+        let tableWidth = tableView.frame.width
+        
         content.image = UIImage(named: culturalAssets[indexPath.row].imageName)
-        content.imageProperties.maximumSize = CGSize(width: 60, height: 60)
-        content.imageProperties.reservedLayoutSize = CGSize(width: 65, height: 0)
+        content.imageProperties.maximumSize = CGSize(width: tableWidth * 0.2, height: tableWidth * 0.2)
+        content.imageProperties.reservedLayoutSize = CGSize(width: tableWidth * 0.2, height: 0)
         
         content.text = culturalAssets[indexPath.row].name
         content.secondaryText = culturalAssets[indexPath.row].shortDescription

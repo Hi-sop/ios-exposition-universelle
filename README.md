@@ -1,17 +1,17 @@
 ## 만국박람회
 ``
-JSON파일을 decoding하여 만국박람회에 대한 설명과 이미지 등을 화면에 띄우고 오토레이아웃을 통해 정렬해보는 프로젝트
+만국박람회의 포스터와 설명을 볼 수 있고, 출품작을 품목별로 정리하여 상세한 설명을 볼 수 있는 앱입니다.
 ``
 
 ---
 ### 목차
 - [팀원](#팀원)
 - [타임라인](#타임라인)
-- [시각화 구조](#시각화-구조)
+- [클래스 다이어그램](#클래스-다이어그램)
 - [실행 화면](#실행-화면)
 - [트러블 슈팅](#트러블-슈팅)
-- [참고 링크](#참고-링크)
 - [팀 회고](#팀-회고)
+- [참고 링크](#참고-링크)
 
 ---
 ### 팀원
@@ -33,9 +33,7 @@ JSON파일을 decoding하여 만국박람회에 대한 설명과 이미지 등�
 |23.11.08|에러 출력 문구 수정, 에러 처리 방법 Result 방식으로 변경|
 |23.11.09|첫 번째 화면의 회전을 세로로 제한하도록 구현|
 
-### 시각화 구조
-
-#### 클래스 다이어그램
+### 클래스 다이어그램
 ![Expo1900](https://github.com/Hi-sop/ios-exposition-universelle/assets/69287436/8ce3c510-9ca8-4309-b5e6-06ca5bb73521)
    
 
@@ -57,9 +55,10 @@ JSON파일을 decoding하여 만국박람회에 대한 설명과 이미지 등�
    
 ### 트러블 슈팅
 
-#### 1. NSMutableAttributedString
-첫 화면의 "방문객", "개최지", "개최 기간"의 폰트 크기가 다른것을 확인. 
-Label을 여러개 만들지 않고 일부 폰트를 수정해보고자 함
+#### 1. 하나의 Label에 다른 폰트크기의 적용
+첫 화면의 "방문객", "개최지", "개최 기간"의 폰트 크기가 다른것을 확인했다. 
+가장 첫번째로 생각난 해결방법은 Label을 여러개 만들어 극복하는 것이었다. 할당이 여러번 필요하며 받아온 정보를 잘라낼 근거또한 모자랐다.
+따라서 하나의 Label만을 사용해 일부 폰트를 수정해보고자 했다.
 ```
    private func changeFontSize(targetString: String, targetLabel: UILabel) {
         let attributedString = NSMutableAttributedString(string: targetLabel.text ?? "")
@@ -69,10 +68,14 @@ Label을 여러개 만들지 않고 일부 폰트를 수정해보고자 함
     }
 ```
 [documentation - NSMutableAttributedString](https://developer.apple.com/documentation/foundation/nsmutableattributedstring)
+NSMutableAttributedString을 통해 일부 폰트에 다른 크기를 적용하는 것으로 해결하게 되었다.
 
-#### 2. setContentOffset / scrollRectToVisible
-처음엔 스크롤 이동에 setContentOffset 메서드를 사용했으나 원하는 위치와 약간 다른 지점이 표시된다는 문제가 있어 스크롤 이동에 일반적으로 쓰이는 두 메서드의 차이를 비교해보았다.
+#### 2. 원하는 지점으로 정확하게 스크롤 이동시키기
+처음엔 스크롤 이동에 setContentOffset 메서드를 사용했으나 원하는 위치와 약간 다른 지점이 표시된다는 문제가 있었다.
+setContentOffset은 특정 포인트를 지정해주는 메서드라 정확한 포인트를 지정해주지 못하고 있다고 느꼈다.
+따라서 scrollRectToVisible을 이용해 titleLabel을 보여줄것이다 라고 설정하여 원하는 지점까지 정확히 스크롤 될 수 있도록 변경했다.
 
+**두 메서드의 차이**
 - setContentOffset
     스크롤 뷰를 전달받은 CGPoint, 즉 한 점으로 이동하는 메서드라 이해
     [documentatio - setContentOffset(_:animated:)](https://developer.apple.com/documentation/uikit/uiscrollview/1619400-setcontentoffset)
@@ -81,10 +84,16 @@ Label을 여러개 만들지 않고 일부 폰트를 수정해보고자 함
     스크롤 뷰를 전달받은 CGRect, 즉 직사각형이 표시되도록 이동하는 메서드라 이해
     [documentation - scrollRectToVisible(_:animated:)
 ](https://developer.apple.com/documentation/uikit/uiscrollview/1619439-scrollrecttovisible)
-특정 포인트를 지정해주기보단 titleLabel을 보여줄것이다 라는 표현이 더 적절하다 생각하여 scrollRectToVisible을 선택.
 
-#### 3. defaultContentConfiguration
-일반적인 셀 구성으로 이미지와 텍스트를 넣었을때 이미지 정렬이 일정하지 않았다. 방법을 찾던 도중 [모던 셀 구성 - WWDC](https://developer.apple.com/videos/play/wwdc2020/10027/)을 접하게되어 셀 구성에 해당 기술을 써보고자 했다.
+#### 3. 셀 내의 이미지와 텍스트의 정렬
+
+일반적인 셀 구성으로 이미지와 텍스트를 넣었을때 이미지 정렬이 일정하지 않았다. 
+이미지의 크기에 따라 셀의 상하는 물론 좌우도 정렬되지 않은 상태로 출력되었다
+
+maximumSize 셀의 이미지, 텍스트를 설정하고 적용시켜 일정한 크기를 가질 수 있게 했다.
+reservedLayoutSize을 통해 셀의 프레임(레이아웃 혹은 배경)의 크기를 변경시켜 이미지가 정렬될 수 있도록 설정해주었다.
+
+[모던 셀 구성 - WWDC](https://developer.apple.com/videos/play/wwdc2020/10027/)
 https://developer.apple.com/documentation/uikit/uitableviewcell/3601058-defaultcontentconfiguration
 ```swift
 let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
@@ -102,63 +111,13 @@ let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
         cell.contentConfiguration = content
         cell.accessoryType = .disclosureIndicator
 ```
-위처럼 생성한 셀의 이미지, 텍스트를 설정하고 적용시킬 수 있었다.
-reservedLayoutSize - 셀의 프레임(레이아웃)의 크기를 변경시키는 것으로 이해했다. 이미지가 모두 정렬될 수 있도록 설정해줌.
-
-
-#### 4. IBOutlet Implicitly Unwrapped Optionals에 대한 고찰.
-```swift
-// DetailViewController의 프로퍼티
-@IBOutlet private weak var imageView: UIImageView!
-@IBOutlet private weak var explanation: UILabel!
-
-// 만약 DetailViewController에서 이러한 메소드가 존재한다면
-func changeValue(text: String) {
-    explanation.text = test
-}
-
-// 그리고 CulturalAssetListViewController에서 이를 호출한다면
-detailViewController.changeValue(text: "TEST")
-```
-- 이와 같은 경우 viewDidLoad가 아직 호출되지 않아 IBOutlet 값에 nil이 들어있는 상태에 접근을 시도하여 런타임 오류가 발생한다.
-- 이러한 경우가 있기에 무작정 자동생성된 코드를 사용하는 것은 좋지 않음.
-
-#### 5. instantiateViewController(identifier:creator:)에서 init()을 통한 데이터 전달.
-- 기존에는 이전 화면에서 다운캐스팅을 통해 다음 화면의 프로퍼티에 직접 접근을 하였는데, 이는 객체지향 관점에서 좋지않는 접근 방식이라 아래와 같이 1차 수정하였음.
-```swift
-func setUp(culturalAsset: CulturalAsset) {
-   name = culturalAsset.name
-   imageName = culturalAsset.imageName
-   detailDescription = culturalAsset.detailDescription
-}
-```
-- 하지만 이러한 방식은 DetailViewController에서 해당 프로퍼티들에게 불필요한 기본값들을 넣어주어야 해서 나온 방안 두 가지
-    - 해당 프로퍼티들을 옵셔널 타입으로 선언
-    - init()을 통한 값 전달
-
-- 결론은 이 프로퍼티들은 데이터를 전달받고 수정될 일이 없는 프로퍼티라 let을 사용하기 위해 init()을 통해 전달하기로 결정함.
-```swift
-guard let detailViewController = storyboard?.instantiateViewController(identifier: String(describing: DetailViewController.self), creator: { coder in
-   DetailViewController(coder: coder, culturalAsset: self.culturalAssets[indexPath.row])
-   }) else {
-   return
-}
-```
-
-
-#### 6. enum + static / struct
-'AssetParser' 메서드는 assetfile명을 받아 디코딩을 하고 지정된 제네릭 타입에 값을 넣어 반환하는 역할을 한다.
-처음엔 struct로 구성했으나 사용할때마다 인스턴스화를 진행해야한다는 이유로 중간에 enum + static으로 변경했다.
-코드리뷰를 진행하는 과정에서 이 변경에 대한 이유가 적절했는지 다시 생각해보게 되었다.
-
-static으로 선언해주었으므로 처음부터 끝까지 메모리 공간을 차지하게 된다. 여러번 불릴게 아니면 낭비가 아닌가? 실제로 우리 코드에선 이 메서드가 딱 두번 호출된다. 
-
 
 ---
 ### 팀 회고
 <details>
 <summary>우리팀이 잘한 점</summary>
-최대한 시간을 투자하여 프로젝트를 이해해보고자 했다.
+최대한 시간을 투자하여 프로젝트를 이해해보고자 했으며 스토리보드를 통해 오토레이아웃 기능들의 이해도를 높혀 코드로도 충분히 작성할 수 있도록 하고자 했다.
+테이블뷰의 구현에 대해 깊게 고민하며 더 나은 화면구성을 만들고자 했다.
 </details>
 
 <details>
